@@ -1,0 +1,1 @@
+{"virtualbox":{"/www-shiny":{"create":true,"guestpath":"/www-shiny","hostpath":"/Users/Thomas/Projects/vaps-dashboard/shiny-app","disabled":false},"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/Thomas/Projects/vaps-dashboard","disabled":false}}}
