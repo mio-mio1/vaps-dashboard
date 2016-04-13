@@ -1,5 +1,35 @@
 library(leaflet)
 
+countries_in_data <- list("Australia" = "AUS",
+  "Austria" = "AUT",
+  "Belgium" = "BEL",
+  "Canada" = "CAN",
+  "Switzerland" = "CHE",
+  "Czech Republic" = "CZE",
+  "Germany" = "DEU",
+  "Denmark" = "DNK",
+  "Spain" = "ESP",
+  "Estonia" = "EST",
+  "Finland" = "FIN",
+  "France" = "FRA",
+  "United Kingdom" = "GBR",
+  "Greece" = "GRC",
+  "Ireland" = "IRL",
+  "Iceland" = "ISL",
+  "Israel" = "ISR",
+  "Italy" = "ITA",
+  "Japan" = "JPN",
+  "Luxembourg" = "LUX",
+  "Netherlands" = "NLD",
+  "Norway" = "NOR",
+  "New Zealand" = "NZL",
+  "Poland" = "POL",
+  "Portugal" = "PRT",
+  "Slovenia" = "SVN",
+  "Sweden" = "SWE",
+  "United States" = "USA"
+)
+
 shinyUI(fluidPage(theme = "bootstrap.css",
 
   headerPanel("VAPS-Dashboard"),
@@ -13,6 +43,9 @@ shinyUI(fluidPage(theme = "bootstrap.css",
           choices = list("Veto Point Election" = "vto_elct",
             "Veto Point Judiciary" = "vto_jud",
             "Veto Point Lower House" = "vto_lh")
+        ),
+        selectInput("country", "Country",
+          choices = countries_in_data
         )
       ),
       conditionalPanel(condition = "input.tabs == 2",

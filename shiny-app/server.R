@@ -16,8 +16,6 @@ merged_data$vto_jud <-  as.factor(merged_data$vto_jud)
 merged_data$vto_lh <-  as.factor(merged_data$vto_lh)
 merged_data$vto_elct <-  as.factor(merged_data$vto_elct)
 
-data.frame(table(merged_data$vto_jud,merged_data$ctr_n))
-
 shinyServer(function(input, output) {
   output$lineplot_veto <- renderPlot({
     print(get_plot_veto())
@@ -48,25 +46,30 @@ shinyServer(function(input, output) {
     choices <- list("Veto Point Election" = "vto_elct",
       "Veto Point Judiciary" = "vto_jud",
       "Veto Point Lower House" = "vto_lh")
-
-     veto_plot <- ggplot(merged_data, aes(x=as.Date(sdate),group=ctr_n))
-     veto_plot <- veto_plot + geom_line(aes_string(y=input$var1), stat = "identity",colour="grey")
+     veto_plot <- ggplot(subset(merged_data, merged_data$ctr_ccode==input$country), aes(x=as.Date(sdate)))
+     #veto_plot <- veto_plot + geom_line(aes_string(y=input$var1), stat = "identity",colour="grey")
      veto_plot <- veto_plot + geom_point(aes_string(y=input$var1), stat = "identity",colour="black", size=1)
      veto_plot <- veto_plot + facet_wrap( ~ ctr_n, ncol = 4) + theme_light() +
-       ylab(names(choices[c(which(choices==input$var1)[1])])) + xlab("Date")
+       ylab(names(choices[c(which(choices==input$var1)[1])])) + scale_y_discrete(limits=c("0","1"), drop = FALSE) + xlab("Date")
      veto_plot
    })
 
   get_summary_veto <- reactive({
     min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
     max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
-    
+
+    merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+
     merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
-    
-    summary <- data.frame(table(merged_data[,input$var1],merged_data$ctr_n))
+
+    table <- table(as.Date(merged_data$sdate),merged_data[,input$var1])
+
+    summary <- data.frame(table[,1])
+    summary[1] <- ifelse(summary[1]==1, "Closed", "Open")
     names(summary)[1] <- "Open/Closed"
-    names(summary)[2] <- "Country"
     summary
+
+
   })
 
   get_plot_bivar <- reactive ({
