@@ -15,16 +15,17 @@ sudo su - -c "R -e \"install.packages('shiny', repos='http://cran.rstudio.com/',
 sudo su - -c "R -e \"install.packages('plyr', repos='http://cran.rstudio.com/', quiet=TRUE)\""
 sudo su - -c "R -e \"install.packages('ggplot2', repos='http://cran.rstudio.com/', quiet=TRUE)\""
 
-#echo "installing fonts"
-#sudo apt-get install msttcorefonts
-#sudo su - -c "R -e \"install.packages('extrafont', repos='http://cran.rstudio.com/', quiet=TRUE, dependencies=TRUE)\""
-#sudo su - -c "R -e \"library(extrafont);font_import(prompt=FALSE)\""
 echo "install map visualization stuff"
 sudo apt-get -y install libgeos-dev libgdal-dev libproj-dev > /dev/null
 sudo su - -c "R -e \"install.packages('gpclib',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
 sudo su - -c "R -e \"install.packages('rgdal',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
 sudo su - -c "R -e \"install.packages('rgeos',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
 sudo su - -c "R -e \"install.packages('maptools',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
+sudo su - -c "R -e \"install.packages('R.cache',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
+sudo su - -c "R -e \"install.packages('RPostgreSQL',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
+sudo su - -c "R -e \"install.packages('leaflet',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
+sudo su - -c "R -e \"install.packages('jsonlite',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
+
 echo "install curl"
 sudo apt-get -y install libcurl4-gnutls-dev > /dev/null
 sudo su - -c "R -e \"install.packages('httr', repos='http://cran.rstudio.com/', quiet=TRUE)\""

@@ -2,7 +2,7 @@
 library(R.cache)
 library(RPostgreSQL) 
 
-setCacheRootPath(path="/vagrant")
+#setCacheRootPath(path="/vagrant")
 dbpass <- loadCache(list("pass", "", ""))
 
 # Connect to Database
@@ -18,7 +18,7 @@ dbGetInfo(drv)
 summary(con)
 
 tables <- dbListTables(con)
-
+tables
 # do tables exist?
 for (i in 1:length(tables)) {
   print(dbExistsTable(con, c("config_data",tables[i])))
@@ -31,10 +31,18 @@ for (i in 1:length(tables)) {
 
 # list all views
 query_views <- dbGetQuery(con,"SELECT viewname from pg_catalog.pg_views")
-
+grep("pty_lh_sts_shr",query_views$viewname)
 # extract view names related to 'view_configuration'
 view_configurations <- grep("view_configuration",query_views$viewname)
 view_configurations <- query_views[view_configurations,]
+
+# add view 'cab_lh_sts_shr'
+view_configurations <- c(view_configurations, query_views[grep("cab_lh_sts_shr",query_views$viewname),])
+# add view 'lhelc_lsq'
+view_configurations <- c(view_configurations, query_views[grep("lhelc_lsq",query_views$viewname),][1])
+
+# add view 'pty_lh_sts_shr'
+view_configurations <- c(view_configurations, query_views[grep("pty_lh_sts_shr",query_views$viewname),])
 
 # read view_configurations
 # for sake of convenience, use only substring as name without 'view_configuration_' prefix
