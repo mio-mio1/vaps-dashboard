@@ -30,13 +30,16 @@ countries_in_data <- list("Australia" = "AUS",
   "United States" = "USA"
 )
 
-shinyUI(fluidPage(theme = "bootstrap.css",
+shinyUI(fluidPage(
 
-  headerPanel("VAPS-Dashboard"),
+  tags$head(
+    tags$h1("VAPS-Dashboard"),
+    tags$link(href="css/vaps_dashboard.css", rel="stylesheet", type="text/css")
+  ),
 
   sidebarLayout(
     sidebarPanel(
-      p(strong(em("Please select variable(s) of interest!"))),
+      h4("Please select variable(s) of interest!"),
 
       conditionalPanel(condition = "input.tabs == 1",
         selectInput("var1", "Variable",
