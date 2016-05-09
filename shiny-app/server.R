@@ -8,13 +8,6 @@ library(jsonlite)
 
 loadCache(load(file = "data/data_13april.Rdata"), key = list("", ""))
 
-merged_data <- merge(vto_lh, country[c(1,2,3)], by="ctr_id")
-merged_data <- merge(merged_data, vto_jud, by=c("ctr_id","sdate"))
-merged_data <- merge(merged_data, vto_elct, by=c("ctr_id","sdate"))
-
-merged_data$vto_jud <-  as.factor(merged_data$vto_jud)
-merged_data$vto_lh <-  as.factor(merged_data$vto_lh)
-merged_data$vto_elct <-  as.factor(merged_data$vto_elct)
 
 shinyServer(function(input, output) {
   output$lineplot_veto <- renderPlot({
@@ -24,6 +17,10 @@ shinyServer(function(input, output) {
   output$summary_veto <- renderTable({
     get_summary_veto()
   })
+
+  output$information_veto <-  renderTable({
+    get_information_veto()
+  }, include.rownames=FALSE)
 
   output$plot_bivar <- renderPlot({
     get_plot_bivar()
@@ -37,39 +34,175 @@ shinyServer(function(input, output) {
     get_plot_map()
   })
 
+
+  #reactives needed for first tab, veto point plots
+  get_information_veto <- reactive({
+    if (input$var1 != "vto_pts") {
+      country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+      merged_data <- merge(veto_points, country, by="ctr_id")
+      merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+
+      choices <- list(
+        "1" = "vto_prs",
+        "2" = "vto_hog",
+        "3" = "vto_lh",
+        "4" = "vto_uh",
+        "5" = "vto_jud",
+        "6" = "vto_elct",
+        "7" = "vto_terr"
+      )
+
+      names(choices) <- paste0(unique(merged_data[,"ctr_id"]),"00",names(choices))
+      merged_data[,"vto_cmt"] <- gsub("^.$", "no comment", merged_data[,"vto_cmt"])
+
+      information_table <- data.frame()
+      information_table[1,1] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(4)]
+      information_table[1,2] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(5)]
+      information_table[1,3] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(8)]
+      information_table[1,4] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(9)]
+      colnames(information_table) <- c("Name", "English Name", "Veto Power", "Comment")
+      information_table
+    }
+  })
+
   get_plot_veto <- reactive ({
-    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
-    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+    ## institutional veto points
+    # Head of State / President
+    # Head of Government 
+    # Lower House
+    # Upper House
+    # judicial
+    # electoral
+    # territorial
 
-    merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
-    
-    choices <- list("Veto Point Election" = "vto_elct",
-      "Veto Point Judiciary" = "vto_jud",
-      "Veto Point Lower House" = "vto_lh")
-     veto_plot <- ggplot(subset(merged_data, merged_data$ctr_ccode==input$country), aes(x=as.Date(sdate)))
-     #veto_plot <- veto_plot + geom_line(aes_string(y=input$var1), stat = "identity",colour="grey")
-     veto_plot <- veto_plot + geom_point(aes_string(y=input$var1), stat = "identity",colour="black", size=1)
-     veto_plot <- veto_plot + facet_wrap( ~ ctr_n, ncol = 4) + theme_light() +
-       ylab(names(choices[c(which(choices==input$var1)[1])])) + scale_y_discrete(limits=c("0","1"), drop = FALSE) + xlab("Date")
-     veto_plot
-   })
-
-  get_summary_veto <- reactive({
-    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
-    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+    merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
 
     merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
 
-    merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
+    if (length(merged_data[,1]) == 0) {
+      # do nothing
+    } else {
 
-    table <- table(as.Date(merged_data$sdate),merged_data[,input$var1])
+      # adjust level of factor dependent on missing values and input chosen
+      if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 != "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"),"NA")
+        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
+      } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 != "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"))
+      } else if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 == "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1]))),"NA"))
+        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
+      } else {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1])))))
+      }
 
-    summary <- data.frame(table[,1])
-    summary[1] <- ifelse(summary[1]==1, "Closed", "Open")
-    names(summary)[1] <- "Open/Closed"
-    summary
+      min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+      max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
 
+      merged_data$sdate <- as.Date(merged_data$sdate)
 
+      merged_data <- merged_data[merged_data$sdate %in% c(max_date:min_date), ]
+
+      choices <- list("Veto Point President" = "vto_prs",
+        "Veto Point Head of Government" = "vto_hog",
+        "Veto Point Lower House" = "vto_lh",
+        "Veto Point Upper House" = "vto_uh",
+        "judicial Veto Point" = "vto_jud",
+        "electoral Veto Point" = "vto_elct",
+        "territorial Veto Point" = "vto_terr",
+        "Sum of open Veto Points" = "vto_pts"
+      )
+
+      veto_plot <- ggplot(merged_data, aes_string(x="sdate", y=input$var1))
+      veto_plot <- veto_plot + geom_point(stat = "identity",colour="black", size=1)
+      veto_plot <- veto_plot + theme_light() + xlab("Date") +
+        ylab(names(choices[c(which(choices==input$var1)[1])]))
+      if (input$var1 != "vto_pts") {
+        veto_plot <- veto_plot + scale_y_discrete(limits=c("0","1"), breaks= c("0","1"), drop=FALSE)
+        veto_plot
+      } else {
+      #  veto_plot <- veto_plot + scale_y_discrete(
+        #  breaks= as.character(c(seq(0, max(as.numeric(as.character(merged_data[,"vto_pts"][merged_data[,"vto_pts"]!="NA"]))), 1))),
+      #    drop = TRUE)
+          #limits= as.character(c("0", max(as.numeric(as.character(merged_data[[input$var1]]))))), 
+      }
+      veto_plot
+    }
+   })
+
+  get_summary_veto <- reactive({
+    if (input$var1 != "vto_pts") {
+      country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+      merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
+  
+      merged_data[,input$var1] <- as.factor(merged_data[,input$var1])
+  
+      min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+      max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+  
+      merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
+      
+      choices <- list("Veto Point President" = "vto_prs",
+        "Veto Point Head of Government" = "vto_hog",
+        "Veto Point Lower House" = "vto_lh",
+        "Veto Point Upper House" = "vto_uh",
+        "judicial Veto Point" = "vto_jud",
+        "electoral Veto Point" = "vto_elct",
+        "territorial Veto Point" = "vto_terr",
+        "Sum of open Veto Points" = "vto_pts"
+      )
+  
+      merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+  
+      if (length(merged_data[,1]) == 0) {
+        # do nothing
+      } else {
+        table <- table(as.Date(merged_data$sdate),merged_data[,input$var1])
+  
+        summary <- data.frame(table[,1])
+        summary[1] <- ifelse(summary[1]==1, "Closed", "Open")
+        names(summary)[1] <- "Open/Closed"
+        summary
+      }
+    } else {
+
+    }
+  })
+
+  output$click_veto_info <- renderPrint({
+
+    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+    merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
+
+    merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+
+    if (length(merged_data[,1]) == 0) {
+      # do nothing
+    } else {
+
+      # adjust level of factor dependent on missing values and input chosen
+      if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 != "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"),"NA")
+        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
+      } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 != "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"))
+      } else if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 == "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1]))),"NA"))
+        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
+      } else {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1])))))
+      }
+
+      min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+      max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+
+      merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
+
+      merged_data$sdate <- as.Date(merged_data$sdate)
+
+      nearPoints(merged_data, input$plot_veto_click, xvar = "sdate", yvar = "vto_pts", addDist = TRUE)
+    }
   })
 
   get_plot_bivar <- reactive ({
@@ -189,8 +322,11 @@ shinyServer(function(input, output) {
   })
 
   output$polltitle_veto = renderPrint({
-    title <- "Presence of specific Veto Points. 1 = Open, 0 = Closed"
-    cat(title)
+    if (input$var1 != "vto_pts") {
+      cat("Presence of specific Veto Points. 1 = Open, 0 = Closed")
+    } else {
+      cat("Summary of specific Veto Points by configuration")
+    }
   })
 
   output$downloadPlot <- downloadHandler(

@@ -43,9 +43,15 @@ shinyUI(fluidPage(
 
       conditionalPanel(condition = "input.tabs == 1",
         selectInput("var1", "Variable",
-          choices = list("Veto Point Election" = "vto_elct",
-            "Veto Point Judiciary" = "vto_jud",
-            "Veto Point Lower House" = "vto_lh")
+          choices = list("Veto Point President" = "vto_prs",
+            "Veto Point Head of Government" = "vto_hog",
+            "Veto Point Lower House" = "vto_lh",
+            "Veto Point Upper House" = "vto_uh",
+            "judicial Veto Point" = "vto_jud",
+            "electoral Veto Point" = "vto_elct",
+            "territorial Veto Point" = "vto_terr",
+            "Sum of open Veto Points" = "vto_pts"
+          )
         ),
         selectInput("country", "Country",
           choices = countries_in_data
@@ -81,7 +87,7 @@ shinyUI(fluidPage(
         max = 2010,
         value = c(1940, 2010),
         sep = ""
-      )
+      ) 
     ),
 
     mainPanel(
@@ -89,8 +95,12 @@ shinyUI(fluidPage(
       tabsetPanel(id ="tabs",
         tabPanel("Lineplot",
           value = 1,
+          tableOutput("information_veto"),
           h5(textOutput("polltitle_veto", inline=TRUE)),
-          plotOutput("lineplot_veto",height="500px"),
+          verbatimTextOutput("click_veto_info"),
+          plotOutput("lineplot_veto",height="500px",
+            click = "plot_veto_click"
+          ),
           downloadButton('downloadPlot', 'Download graph'),
           tableOutput("summary_veto"),
           downloadButton('downloadTable', 'Download table')
@@ -113,5 +123,12 @@ shinyUI(fluidPage(
         )
       )
     )
+  ),
+
+  tags$footer(
+    tags$a(target="_blank", href="https://www.sowi.hu-berlin.de/de/lehrbereiche/comppol", "Chair Comparative Politics at Humboldt-Universität zu Berlin"),
+    tags$span(" · "),
+    tags$a(target="_blank", href="https://welfarestatefutures.org", " Welfare State Futures - Norface")
   )
+
 ))
