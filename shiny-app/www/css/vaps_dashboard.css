@@ -1,0 +1,101 @@
+/* 
+set standard font
+*/
+* {
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+/* 
+heading
+*/
+h1 {
+  color: black;
+}
+
+/* 
+set color of a tag in body, i.e., links to other tabs
+*/
+body a {
+  color: gray;
+}
+
+
+/* 
+when hovering over tabs in body
+*/
+body a:hover {
+    color: black;
+}
+
+/* 
+when clicking on tab
+*/
+body a:focus {
+    color: black;
+}
+
+/* 
+main tab
+*/
+.col-sm-8 {
+  background-color: white;
+}
+
+/* 
+sidebar tab
+*/
+.col-sm-4 {
+  background-color: white;
+}
+
+/* 
+box inside sidebar tab
+*/
+.well {
+  background-color: white;
+  border: 1px solid black;
+  box-shadow: none;
+}
+
+/* 
+nav tab
+*/
+.nav-tabs {
+  border-bottom: 1px solid black;
+  border-top: 1px solid black;
+}
+
+/* 
+active nav tab
+*/
+.nav-tabs > li.active > a {
+  border: 1px solid black;
+}
+
+/* 
+set inactive variable text in dropdown to gray
+*/
+.selectize-dropdown {
+  font-family: sans-serif;
+  color: gray;
+}
+
+/* 
+year slider in sidebar elements
+*/
+
+.irs-from, .irs-to, .irs-bar, .irs-slider {
+  background: gray;
+}
+
+.irs-bar, .irs-slider {
+  border-top: gray;
+  border-bottom: gray;
+}
+
+/* 
+text in data table
+*/
+body table.data {
+  color: gray;
+}

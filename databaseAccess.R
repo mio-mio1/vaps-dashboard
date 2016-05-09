@@ -1,79 +1,53 @@
 ## Access HU Database ##
+library(R.cache)
+library(RPostgreSQL) 
+
+#setCacheRootPath(path="/vagrant")
+dbpass <- loadCache(list("pass", "", ""))
 
 # Connect to Database
 dbname <- "polconfdb"
 dbuser <- "polconfdb"
-dbpass <-  ""
-
 dbhost <- "moodledb.cms.hu-berlin.de"
-dbport <- ""
+dbport <- "5432"
 
-library(RPostgreSQL) 
 drv <- dbDriver("PostgreSQL") 
 con <- dbConnect(drv, host=dbhost, port=dbport, dbname=dbname, user=dbuser, password=dbpass) 
 
 dbGetInfo(drv)
 summary(con)
 
+tables <- dbListTables(con)
+tables
+# do tables exist?
+for (i in 1:length(tables)) {
+  print(dbExistsTable(con, c("config_data",tables[i])))
+}
 
-# dbExistsTable
-dbExistsTable(con, c("config_data", "cabinet"))
-cabinet <- dbReadTable(con, c("config_data","cabinet"))
+# read tables
+for (i in 1:length(tables)) {
+  assign(paste(tables[i]), dbReadTable(con, c("config_data",tables[i])))
+}
 
-dbExistsTable(con, c("config_data", "cabinet_portfolios"))
-cabinet_portfolios <- dbReadTable(con, c("config_data","cabinet_portfolios"))
+# list all views
+query_views <- dbGetQuery(con,"SELECT viewname from pg_catalog.pg_views")
+grep("pty_lh_sts_shr",query_views$viewname)
+# extract view names related to 'view_configuration'
+view_configurations <- grep("view_configuration",query_views$viewname)
+view_configurations <- query_views[view_configurations,]
 
-dbExistsTable(con, c("config_data", "cabinet_reshuffle"))
-cabinet_reshuffle <- dbReadTable(con, c("config_data","cabinet_reshuffle"))
+# add view 'cab_lh_sts_shr'
+view_configurations <- c(view_configurations, query_views[grep("cab_lh_sts_shr",query_views$viewname),])
+# add view 'lhelc_lsq'
+view_configurations <- c(view_configurations, query_views[grep("lhelc_lsq",query_views$viewname),][1])
 
-dbExistsTable(con, c("config_data", "country"))
-country <- dbReadTable(con, c("config_data","country"))
+# add view 'pty_lh_sts_shr'
+view_configurations <- c(view_configurations, query_views[grep("pty_lh_sts_shr",query_views$viewname),])
 
-dbExistsTable(con, c("config_data", "electoral_alliances"))
-electoral_alliances <- dbReadTable(con, c("config_data","electoral_alliances"))
-
-dbExistsTable(con, c("config_data", "lh_election"))
-lh_election <- dbReadTable(con, c("config_data","lh_election"))
-
-dbExistsTable(con, c("config_data", "lh_seat_results"))
-lh_seat_results <- dbReadTable(con, c("config_data","lh_seat_results"))
-
-dbExistsTable(con, c("config_data", "lh_vote_results"))
-lh_vote_results <- dbReadTable(con, c("config_data","lh_vote_results"))
-
-dbExistsTable(con, c("config_data", "lower_house"))
-lower_house <- dbReadTable(con, c("config_data","lower_house"))
-
-dbExistsTable(con, c("config_data", "matviews"))
-matviews <- dbReadTable(con, c("config_data","matviews"))
-
-dbExistsTable(con, c("config_data", "minister"))
-minister <- dbReadTable(con, c("config_data","minister"))
-
-dbExistsTable(con, c("config_data", "mv_configuration_events"))
-mv_configuration_events <- dbReadTable(con, c("config_data","mv_configuration_events"))
-
-dbExistsTable(con, c("config_data", "party"))
-party <- dbReadTable(con, c("config_data","lh_election"))
-
-dbExistsTable(con, c("config_data", "pres_elec_vres"))
-pres_elec_vres <- dbReadTable(con, c("config_data","pres_elec_vres"))
-
-dbExistsTable(con, c("config_data", "presidential_election"))
-presidential_election <- dbReadTable(con, c("config_data","presidential_election"))
-
-dbExistsTable(con, c("config_data", "uh_election"))
-uh_election <- dbReadTable(con, c("config_data","uh_election"))
-
-dbExistsTable(con, c("config_data", "uh_seat_results"))
-uh_seat_results <- dbReadTable(con, c("config_data","uh_seat_results"))
-
-dbExistsTable(con, c("config_data", "upper_house"))
-upper_house <- dbReadTable(con, c("config_data","upper_house"))
-
-dbExistsTable(con, c("config_data", "veto_points"))
-veto_points <- dbReadTable(con, c("config_data","veto_points"))
-
+# read view_configurations
+# for sake of convenience, use only substring as name without 'view_configuration_' prefix
+for (i in 1:length(view_configurations)) {
+  assign(paste(gsub("view_configuration_","", view_configurations[i])), dbReadTable(con, c("config_data",view_configurations[i])))
+}
 
 dbDisconnect(con)
-
