@@ -9,14 +9,23 @@ set standard font
 heading
 */
 h1 {
-  color: black;
+  color: #036 !important;
+  font-family: Verdana,Helvetica,Arial,sans-serif
+  !important
+}
+
+/* 
+moving heading to the right
+*/
+h1 {
+  margin: 0.67em 100px;
 }
 
 /* 
 set color of a tag in body, i.e., links to other tabs
 */
 body a {
-  color: gray;
+  color: white;
 }
 
 
@@ -70,6 +79,13 @@ active nav tab
 */
 .nav-tabs > li.active > a {
   border: 1px solid black;
+  background-color: #036;
+  color: #FFF;
+}
+
+.nav-tabs {
+  background-color: #036;
+  color: #FFF;
 }
 
 /* 
