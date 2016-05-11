@@ -5,13 +5,14 @@ library(R.cache)
 library(leaflet)
 library(rgdal)
 library(jsonlite)
+library(plotly)
 
 loadCache(load(file = "data/data_13april.Rdata"), key = list("", ""))
 
 
 shinyServer(function(input, output) {
-  output$lineplot_veto <- renderPlot({
-    print(get_plot_veto())
+  output$lineplot_veto <- renderPlotly({
+    get_plot_veto()
   })
 
   output$summary_veto <- renderTable({
@@ -22,11 +23,11 @@ shinyServer(function(input, output) {
     get_information_veto()
   }, include.rownames=FALSE)
 
-  output$plot_bivar <- renderPlot({
+  output$plot_bivar <- renderPlotly({
     get_plot_bivar()
   })
 
-  output$plot_bar <- renderPlot({
+  output$plot_bar <- renderPlotly({
     get_plot_bar()
   })
 
@@ -120,14 +121,14 @@ shinyServer(function(input, output) {
         ylab(names(choices[c(which(choices==input$var1)[1])]))
       if (input$var1 != "vto_pts") {
         veto_plot <- veto_plot + scale_y_discrete(limits=c("0","1"), breaks= c("0","1"), drop=FALSE)
-        veto_plot
+        (veto_plot <- ggplotly(veto_plot))
       } else {
       #  veto_plot <- veto_plot + scale_y_discrete(
         #  breaks= as.character(c(seq(0, max(as.numeric(as.character(merged_data[,"vto_pts"][merged_data[,"vto_pts"]!="NA"]))), 1))),
       #    drop = TRUE)
           #limits= as.character(c("0", max(as.numeric(as.character(merged_data[[input$var1]]))))), 
+        (veto_plot <- ggplotly(veto_plot))
       }
-      veto_plot
     }
    })
 
@@ -170,41 +171,6 @@ shinyServer(function(input, output) {
     }
   })
 
-  output$click_veto_info <- renderPrint({
-
-    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
-    merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
-
-    merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
-
-    if (length(merged_data[,1]) == 0) {
-      # do nothing
-    } else {
-
-      # adjust level of factor dependent on missing values and input chosen
-      if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 != "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"),"NA")
-        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
-      } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 != "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"))
-      } else if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 == "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1]))),"NA"))
-        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
-      } else {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1])))))
-      }
-
-      min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
-      max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
-
-      merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
-
-      merged_data$sdate <- as.Date(merged_data$sdate)
-
-      nearPoints(merged_data, input$plot_veto_click, xvar = "sdate", yvar = "vto_pts", addDist = TRUE)
-    }
-  })
-
   get_plot_bivar <- reactive ({
     view_cab_lh_sts_shr$cab_lh_sts_shr <- as.numeric(as.character(view_cab_lh_sts_shr$cab_lh_sts_shr))
 
@@ -216,6 +182,12 @@ shinyServer(function(input, output) {
     
     merged_agg_data <- merge(merged_agg_data, view_lhelc_lsq, by="lh_id")
     merged_agg_data$cab_lh_sts_shr2 <- merged_agg_data$cab_lh_sts_shr*100
+    
+    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+    
+    merged_agg_data <- merged_agg_data[as.Date(merged_agg_data$sdate) %in% c(max_date:min_date), ]
+    
     model <- lm(lhelc_lsq_computed ~ cab_lh_sts_shr2, data=merged_agg_data)
 
     veto_plot <- ggplot(merged_agg_data, aes(x=cab_lh_sts_shr,y=lhelc_lsq_computed))
@@ -225,9 +197,9 @@ shinyServer(function(input, output) {
 
     if (input$linear_box) {
       veto_plot <- veto_plot + geom_smooth(method=lm)
-      veto_plot
+      (veto_plot <- ggplotly(veto_plot))
     } else {
-      veto_plot
+      (veto_plot <- ggplotly(veto_plot))
     }
   })
 
@@ -238,19 +210,21 @@ shinyServer(function(input, output) {
 
     choices = list("Lower house seat share" = "vto_elct")
 
-    merged_data_bar <- subset(na.omit(subset(merged_data_bar,merged_data_bar$ctr_n=="GERMANY" & merged_data_bar$pty_abr!= "Z")))
-
+    merged_data_bar <- subset(na.omit(subset(merged_data_bar,merged_data_bar[,"ctr_ccode"]==input$country & merged_data_bar$pty_abr!= "Z")))
+    
+    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+    
+    merged_data_bar <- merged_data_bar[as.Date(merged_data_bar$sdate) %in% c(max_date:min_date), ]
+    
     merged_data_bar$pty_lhelc_sts_shr <- as.numeric(as.character(merged_data_bar$pty_lhelc_sts_shr))
 
     merged_data_bar <- merged_data_bar[order(merged_data_bar$ctr_id, merged_data_bar$pty_abr),]
 
-    veto_plot <- ggplot(merged_data_bar, aes(x=as.Date(lh_sdate), y=pty_lhelc_sts_shr, fill=pty_abr))
-    veto_plot <- veto_plot + geom_bar(stat = "identity", position = "stack") + scale_fill_brewer(palette=1, na.value="black")
-    veto_plot <- veto_plot + geom_text(data=merged_data_bar,aes(x=as.Date(lh_sdate), y=pty_lhelc_sts_shr, fill=pty_abr, 
-      label =  ifelse(merged_data_bar$pty_lhelc_sts_shr > 0.05,paste0(round(pty_lhelc_sts_shr,2)*100,"%"), "")), position = "stack", vjust=1, size=6) +
-      theme_light() + scale_y_continuous(labels = percent_format(),expand = c(0, 0),limits=c(0, 1.05)) +
-      xlab("Date") + ylab("Seat share by party") + guides(fill = guide_legend(reverse = TRUE, title="Party"))
-    veto_plot
+    bar_plot <- ggplot(merged_data_bar, aes(x=as.Date(lh_sdate), y=pty_lhelc_sts_shr, fill=pty_abr))
+    bar_plot <- bar_plot + geom_bar(stat = "identity", position = "stack") + scale_fill_brewer(palette=1, na.value="black")
+    bar_plot <- bar_plot + theme_light() + xlab("Date") + ylab("Seat share by party") + guides(fill = guide_legend(reverse = TRUE, title="Party"))
+    (bar_plot <- ggplotly(bar_plot))
   })
 
   get_plot_map <- reactive ({
