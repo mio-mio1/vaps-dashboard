@@ -7,8 +7,10 @@ library(rgdal)
 library(jsonlite)
 library(plotly)
 
+loadCache(load(file = "data/data_13april.Rdata"), key = list("", ""))
+
+
 shinyServer(function(input, output) {
-  loadCache(load(file = "data/data_13april.Rdata"), key = list("", ""))
 
   output$lineplot_veto <- renderPlotly({
     get_plot_veto()
@@ -120,17 +122,13 @@ shinyServer(function(input, output) {
         ylab(names(choices[c(which(choices==input$var1)[1])]))
       if (input$var1 != "vto_pts") {
         veto_plot <- veto_plot + scale_y_discrete(limits=c("0","1"), breaks= c("0","1"), drop=FALSE)
-        veto_plot
-        (plotly_veto_plot <- ggplotly(veto_plot))
-        #plotly_veto_plot
+        (veto_plot <- ggplotly(veto_plot))
       } else {
       #  veto_plot <- veto_plot + scale_y_discrete(
         #  breaks= as.character(c(seq(0, max(as.numeric(as.character(merged_data[,"vto_pts"][merged_data[,"vto_pts"]!="NA"]))), 1))),
       #    drop = TRUE)
           #limits= as.character(c("0", max(as.numeric(as.character(merged_data[[input$var1]]))))), 
-        (plotly_veto_plot <- ggplotly(veto_plot))
-        #plotly_veto_plot
-        
+        (veto_plot <- ggplotly(veto_plot))
       }
     }
    })

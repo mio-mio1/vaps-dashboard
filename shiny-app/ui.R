@@ -98,6 +98,7 @@ shinyUI(fluidPage(
           tableOutput("information_veto"),
           h5(textOutput("polltitle_veto", inline=TRUE)),
           plotlyOutput("lineplot_veto", height="600px"),
+          downloadButton('downloadPlot', 'Download graph'),
           tableOutput("summary_veto"),
           downloadButton('downloadTable', 'Download table')
         ),
