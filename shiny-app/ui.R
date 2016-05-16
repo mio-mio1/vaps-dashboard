@@ -1,4 +1,5 @@
 library(leaflet)
+library(plotly)
 
 countries_in_data <- list("Australia" = "AUS",
   "Austria" = "AUT",
@@ -52,9 +53,6 @@ shinyUI(fluidPage(
             "territorial Veto Point" = "vto_terr",
             "Sum of open Veto Points" = "vto_pts"
           )
-        ),
-        selectInput("country", "Country",
-          choices = countries_in_data
         )
       ),
       conditionalPanel(condition = "input.tabs == 2",
@@ -69,9 +67,6 @@ shinyUI(fluidPage(
       conditionalPanel(condition = "input.tabs == 3",
         selectInput("var1", "Variable",
           choices = list("Seat share in Lower House" = "germany")
-        ),
-        selectInput("var2", "Select country",
-          choices = list("Germany" = "germany")
         )
       ),
       conditionalPanel(condition = "input.tabs == 4",
@@ -79,7 +74,12 @@ shinyUI(fluidPage(
           choices = list("Average Cabinet Lower House Seat Share" = "Average Cabinet Lower House Seat Share")
         )
       ),
-
+      conditionalPanel(condition = "input.tabs != 4",
+        selectInput("country", "Country",
+          choices = countries_in_data
+        )
+      ),
+      
       sliderInput(
         "year_range",
         label = h3("Year range"),
@@ -97,29 +97,25 @@ shinyUI(fluidPage(
           value = 1,
           tableOutput("information_veto"),
           h5(textOutput("polltitle_veto", inline=TRUE)),
-          verbatimTextOutput("click_veto_info"),
-          plotOutput("lineplot_veto",height="500px",
-            click = "plot_veto_click"
-          ),
-          downloadButton('downloadPlot', 'Download graph'),
+          plotlyOutput("lineplot_veto", height="600px"),
           tableOutput("summary_veto"),
           downloadButton('downloadTable', 'Download table')
         ),
         tabPanel("Bivariate Association",
           value = 2,
           h5(textOutput("polltitle_bivar", inline=TRUE)),
-          plotOutput("plot_bivar",height="500px"),
+          plotlyOutput("plot_bivar", height="600px"),
           downloadButton('downloadPlot2', 'Download graph'),
           tableOutput("summary_bivariate"),
           downloadButton('downloadTable2', 'Download table')
         ),
         tabPanel("Barplot",
           value = 3,
-          plotOutput("plot_bar",height="500px")
+          plotlyOutput("plot_bar", height="600px")
         ),
         tabPanel("Map",
           value = 4,
-          leafletOutput("plot_map",height="500px")
+          leafletOutput("plot_map", height="600px")
         )
       )
     )

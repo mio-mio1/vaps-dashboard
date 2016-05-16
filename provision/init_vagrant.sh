@@ -25,6 +25,7 @@ sudo su - -c "R -e \"install.packages('R.cache',  repos='http://cran.rstudio.com
 sudo su - -c "R -e \"install.packages('RPostgreSQL',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
 sudo su - -c "R -e \"install.packages('leaflet',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
 sudo su - -c "R -e \"install.packages('jsonlite',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
+sudo su - -c "R -e \"install.packages('plotly',  repos='http://cran.rstudio.com/', quiet=TRUE)\""
 
 echo "install curl"
 sudo apt-get -y install libcurl4-gnutls-dev > /dev/null
