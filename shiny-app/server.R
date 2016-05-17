@@ -21,6 +21,10 @@ shinyServer(function(input, output) {
     get_summary_veto()
   })
 
+  output$summary_bivar <- renderTable({
+    get_summary_bivar()
+  })
+
   output$information_veto <-  renderTable({
     get_information_veto()
   }, include.rownames=FALSE)
@@ -42,7 +46,7 @@ shinyServer(function(input, output) {
 
   #reactives needed for first tab, veto point plots
   get_information_veto <- reactive({
-    if (input$var1 != "vto_pts") {
+    if (input$variable_veto != "vto_pts") {
       country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
       merged_data <- merge(veto_points, country, by="ctr_id")
       merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
@@ -61,10 +65,10 @@ shinyServer(function(input, output) {
       merged_data[,"vto_cmt"] <- gsub("^.$", "no comment", merged_data[,"vto_cmt"])
 
       information_table <- data.frame()
-      information_table[1,1] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(4)]
-      information_table[1,2] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(5)]
-      information_table[1,3] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(8)]
-      information_table[1,4] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$var1))),c(9)]
+      information_table[1,1] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(4)]
+      information_table[1,2] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(5)]
+      information_table[1,3] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(8)]
+      information_table[1,4] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(9)]
       colnames(information_table) <- c("Name", "English Name", "Veto Power", "Comment")
       information_table
     }
@@ -80,8 +84,18 @@ shinyServer(function(input, output) {
     # electoral
     # territorial
 
+    choices <- list("Veto Point President" = "vto_prs",
+      "Veto Point Head of Government" = "vto_hog",
+      "Veto Point Lower House" = "vto_lh",
+      "Veto Point Upper House" = "vto_uh",
+      "judicial Veto Point" = "vto_jud",
+      "electoral Veto Point" = "vto_elct",
+      "territorial Veto Point" = "vto_terr",
+      "Sum of open Veto Points" = "vto_pts"
+    )
+
     country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
-    merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
+    merged_data <- merge(eval(parse(text=input$variable_veto))[c("ctr_id", "sdate", input$variable_veto)], country, by="ctr_id")
 
     merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
 
@@ -90,16 +104,16 @@ shinyServer(function(input, output) {
     } else {
 
       # adjust level of factor dependent on missing values and input chosen
-      if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 != "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1", "NA"))
-        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
-      } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 != "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"))
-      } else if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 == "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(seq(0, max(as.numeric(as.character(na.omit(merged_data[,"vto_pts"]))))),"NA"))
-        merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
-      } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 == "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(seq(0, max(as.numeric(as.character(na.omit(merged_data[,"vto_pts"])))))))
+      if (any(is.na(merged_data[,input$variable_veto]))==TRUE & input$variable_veto != "vto_pts") {
+        merged_data[,input$variable_veto] <- factor(merged_data[,input$variable_veto], levels=c("0","1", "NA"))
+        merged_data[,input$variable_veto][is.na(merged_data[,input$variable_veto])] <- "NA"
+      } else if (any(is.na(merged_data[,input$variable_veto]))==FALSE & input$variable_veto != "vto_pts") {
+        merged_data[,input$variable_veto] <- factor(merged_data[,input$variable_veto], levels=c("0","1"))
+      } else if (any(is.na(merged_data[,input$variable_veto]))==TRUE & input$variable_veto == "vto_pts") {
+        merged_data[,input$variable_veto] <- factor(merged_data[,input$variable_veto], levels=c(seq(0, max(as.numeric(as.character(na.omit(merged_data[,"vto_pts"]))))),"NA"))
+        merged_data[,input$variable_veto][is.na(merged_data[,input$variable_veto])] <- "NA"
+      } else if (any(is.na(merged_data[,input$variable_veto]))==FALSE & input$variable_veto == "vto_pts") {
+        merged_data[,input$variable_veto] <- factor(merged_data[,input$variable_veto], levels=c(seq(0, max(as.numeric(as.character(na.omit(merged_data[,"vto_pts"])))))))
       }
 
       min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
@@ -109,21 +123,11 @@ shinyServer(function(input, output) {
 
       merged_data <- merged_data[merged_data$sdate %in% c(max_date:min_date), ]
 
-      choices <- list("Veto Point President" = "vto_prs",
-        "Veto Point Head of Government" = "vto_hog",
-        "Veto Point Lower House" = "vto_lh",
-        "Veto Point Upper House" = "vto_uh",
-        "judicial Veto Point" = "vto_jud",
-        "electoral Veto Point" = "vto_elct",
-        "territorial Veto Point" = "vto_terr",
-        "Sum of open Veto Points" = "vto_pts"
-      )
-
-      veto_plot <- ggplot(merged_data, aes_string(x="sdate", y=input$var1))
+      veto_plot <- ggplot(merged_data, aes_string(x="sdate", y=input$variable_veto))
       veto_plot <- veto_plot + geom_point(stat = "identity",colour="black", size=1)
       veto_plot <- veto_plot + theme_light() + xlab("Date") +
-        ylab(names(choices[c(which(choices==input$var1)[1])]))
-      if (input$var1 != "vto_pts") {
+        ylab(names(choices[c(which(choices==input$variable_veto)[1])]))
+      if (input$variable_veto != "vto_pts") {
         veto_plot <- veto_plot + scale_y_discrete(drop=FALSE)
         veto_plot
         #(plotly_veto_plot <- ggplotly(veto_plot))
@@ -135,29 +139,22 @@ shinyServer(function(input, output) {
   })
 
   get_summary_veto <- reactive({
-    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
-    merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
 
-    merged_data[,input$var1] <- as.factor(merged_data[,input$var1])
+    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+    merged_data <- merge(eval(parse(text=input$variable_veto))[c("ctr_id", "sdate", input$variable_veto)], country, by="ctr_id")
+
+    merged_data[,input$variable_veto] <- as.factor(merged_data[,input$variable_veto])
     min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
     max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
     merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
-    choices <- list("Veto Point President" = "vto_prs",
-      "Veto Point Head of Government" = "vto_hog",
-      "Veto Point Lower House" = "vto_lh",
-      "Veto Point Upper House" = "vto_uh",
-      "judicial Veto Point" = "vto_jud",
-      "electoral Veto Point" = "vto_elct",
-      "territorial Veto Point" = "vto_terr",
-      "Sum of open Veto Points" = "vto_pts"
-    )
+
     merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
 
     if (length(merged_data[,1]) == 0) {
       # do nothing
     } else {
-      if (input$var1 != "vto_pts") {
-        table <- table(as.Date(merged_data$sdate),merged_data[,input$var1])
+      if (input$variable_veto != "vto_pts") {
+        table <- table(as.Date(merged_data$sdate),merged_data[,input$variable_veto])
 
         summary <- data.frame(table[,1])
         summary[1] <- ifelse(summary[1]==1, "Closed", "Open")
@@ -179,37 +176,122 @@ shinyServer(function(input, output) {
   })
 
   get_plot_bivar <- reactive ({
-    view_cab_lh_sts_shr$cab_lh_sts_shr <- as.numeric(as.character(view_cab_lh_sts_shr$cab_lh_sts_shr))
+    choices <- list("LH Disproportionality" = "lhelc_lsq",
+      "effective number of parties" = "lh_enpp",
+      "cabinet seat share" = "cab_lh_sts_shr",
+      "seat A volatitlity" = "lhelc_vola_sts",
+      "seat B volatitlity" ="lhelc_volb_sts",
+      "vote A volatitlity" = "lhelc_vola_vts",
+      "vote B volatitlity" = "lhelc_volb_vts"
+    )
 
-    merged_agg_data <-aggregate(view_cab_lh_sts_shr, by=list(view_cab_lh_sts_shr$lh_id), 
+    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+    merged_data <- merge(view_cab_lh_sts_shr, country, by="ctr_id")
+    merged_data <- merge(merged_data, lower_house, by="lh_id")
+    merged_data <- merge(merged_data, lh_election, by="lhelc_id")
+
+    merged_data[,input$variable_bivar1] <- as.numeric(as.character(merged_data[,input$variable_bivar1]))
+    merged_data[,input$variable_bivar2] <- as.numeric(as.character(merged_data[,input$variable_bivar2]))
+
+    max_x_value <- max(merged_data[,input$variable_bivar1], na.rm = TRUE)
+    max_y_value <- max(merged_data[,input$variable_bivar2], na.rm = TRUE)
+
+    merged_data <- merged_data[c("ctr_ccode", "sdate", input$variable_bivar1, input$variable_bivar2)]
+
+    merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+
+    merged_agg_data <-aggregate(merged_data, by=list(merged_data$sdate),
       FUN=mean, na.rm=TRUE)
-    names(view_lhelc_lsq)[1] <- "lh_id"
 
-    view_lhelc_lsq$lhelc_lsq_computed <- as.numeric(as.character(view_lhelc_lsq$lhelc_lsq_computed))
-    
-    merged_agg_data <- merge(merged_agg_data, view_lhelc_lsq, by="lh_id")
-    merged_agg_data$cab_lh_sts_shr2 <- merged_agg_data$cab_lh_sts_shr*100
-    
     min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
     max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
-    
+
     merged_agg_data <- merged_agg_data[as.Date(merged_agg_data$sdate) %in% c(max_date:min_date), ]
-    
-    model <- lm(lhelc_lsq_computed ~ cab_lh_sts_shr2, data=merged_agg_data)
 
-    veto_plot <- ggplot(merged_agg_data, aes(x=cab_lh_sts_shr,y=lhelc_lsq_computed))
-    veto_plot <- veto_plot + geom_point(stat = "identity",colour="black", size=1) + theme_light() +
-      ylab("Least squares index") + xlab("Cabinet seat share in Lower House") + 
-      scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(labels = percent_format(),expand = c(0, 0),limits=c(0, 1.1))
+    #if ( (any(!is.na(merged_agg_data[,input$variable_bivar1]))==FALSE) |  (any(!is.na(merged_agg_data[,input$variable_bivar2]))==FALSE) ) {
+      # do nothing
+    #} else {
 
-    if (input$linear_box) {
-      veto_plot <- veto_plot + geom_smooth(method=lm)
-      veto_plot
-      #(veto_plot <- ggplotly(veto_plot))
-    } else {
-      #(veto_plot <- ggplotly(veto_plot))
-      veto_plot
-    }
+      bivar_plot <- ggplot(merged_agg_data, aes_string(x=input$variable_bivar1, y=input$variable_bivar2))
+      bivar_plot <- bivar_plot + geom_point(stat = "identity",colour="black", size=1) + theme_light() +
+        xlab(names(choices[c(which(choices==input$variable_bivar1)[1])])) +
+        ylab(names(choices[c(which(choices==input$variable_bivar2)[1])]))
+        #scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0))
+
+      if (input$prediction_box==1) {
+        if (input$prediction_box==1 & input$axis_scale==1) {
+          bivar_plot <- bivar_plot + scale_x_continuous(limits=c(0, max_x_value)) +
+            scale_y_continuous(limits=c(0, max_y_value)) +
+            geom_smooth(method=lm, alpha=0.2)
+        } else if (input$prediction_box==1 & input$axis_scale==2) {
+          bivar_plot <- bivar_plot + 
+          geom_smooth(method=lm, alpha=0.2)
+        }
+      } else if (input$prediction_box==2) {
+        if (input$prediction_box==2 & input$axis_scale==1) {
+          bivar_plot <- bivar_plot + scale_x_continuous(limits=c(0, max_x_value)) +
+            scale_y_continuous(limits=c(0, max_y_value)) +
+            geom_smooth(method=loess, alpha=0.2)
+        } else if (input$prediction_box==2 & input$axis_scale==2) {
+          bivar_plot <- bivar_plot + 
+          geom_smooth(method=loess, alpha=0.2)
+        }
+      } else if (input$prediction_box==0) {
+        if (input$prediction_box==0 & input$axis_scale==1) {
+          bivar_plot <- bivar_plot + scale_x_continuous(limits=c(0, max_x_value)) +
+            scale_y_continuous(limits=c(0, max_y_value))
+        } else if (input$prediction_box==0 & input$axis_scale==2) {
+          #do nothing
+        }
+      }
+      bivar_plot
+    #}
+  })
+
+
+  get_summary_bivar <- reactive({
+    choices <- list("LH Disproportionality" = "lhelc_lsq",
+      "effective number of parties" = "lh_enpp",
+      "cabinet seat share" = "cab_lh_sts_shr",
+      "seat A volatitlity" = "lhelc_vola_sts",
+      "seat B volatitlity" ="lhelc_volb_sts",
+      "vote A volatitlity" = "lhelc_vola_vts",
+      "vote B volatitlity" = "lhelc_volb_vts"
+    )
+
+    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+    merged_data <- merge(view_cab_lh_sts_shr, country, by="ctr_id")
+    merged_data <- merge(merged_data, lower_house, by="lh_id")
+    merged_data <- merge(merged_data, lh_election, by="lhelc_id")
+
+    merged_data[,input$variable_bivar1] <- as.numeric(as.character(merged_data[,input$variable_bivar1]))
+    merged_data[,input$variable_bivar2] <- as.numeric(as.character(merged_data[,input$variable_bivar2]))
+
+    merged_data <- merged_data[c("ctr_ccode", "sdate", input$variable_bivar1, input$variable_bivar2)]
+
+    merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+
+    merged_agg_data <-aggregate(merged_data, by=list(merged_data$sdate),
+      FUN=mean, na.rm=TRUE)
+
+    #merged_agg_data <- merge(merged_data, view_lhelc_lsq, by="lh_id")
+    #merged_agg_data$cab_lh_sts_shr2 <- merged_agg_data$cab_lh_sts_shr*100
+
+    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+
+    merged_agg_data <- merged_agg_data[as.Date(merged_agg_data$sdate) %in% c(max_date:min_date), ]
+
+    #if (length(merged_data[,1]) == 0) {
+      # do nothing
+    #} else {
+      merged_agg_data <- merged_agg_data[,c(1,4,5)]
+      rownames(merged_agg_data) <-  merged_agg_data[,c(1)]
+      merged_agg_data <- merged_agg_data[,c(2,3)]
+      colnames(merged_agg_data) <- c(names(choices[c(which(choices==input$variable_bivar1)[1])]),
+        names(choices[c(which(choices==input$variable_bivar2)[1])]))
+      merged_agg_data
+    #}
   })
 
   get_plot_bar <- reactive ({
@@ -305,14 +387,14 @@ shinyServer(function(input, output) {
   })
 
   output$polltitle_veto = renderPrint({
-    if (input$var1 != "vto_pts") {
+    if (input$variable_veto != "vto_pts") {
       cat("Presence of specific Veto Points. 1 = Open, 0 = Closed")
     } else {
       cat("Summary of specific Veto Points by configuration")
     }
   })
 
-  output$downloadPlot <- downloadHandler(
+  output$downloadVetoPlot <- downloadHandler(
     filename = function () {
       paste('plot', '.png', sep='')
     },
@@ -322,12 +404,31 @@ shinyServer(function(input, output) {
     }
   )
 
-  output$downloadTable <- downloadHandler(
+  output$downloadVetoTable <- downloadHandler(
     filename = function () {
       paste('table', '.csv', sep='')
     },
     content = function (file) {
       write.table(get_summary_veto(), file, row.names = TRUE)
+    }
+  )
+
+    output$downloadBivariatePlot <- downloadHandler(
+    filename = function () {
+      paste('plot', '.png', sep='')
+    },
+    content = function (file) {
+      plot <- get_plot_bivar()
+      ggsave(file, plot, width=10, height=10)
+    }
+  )
+
+  output$downloadBivariateTable <- downloadHandler(
+    filename = function () {
+      paste('table', '.csv', sep='')
+    },
+    content = function (file) {
+      write.table(get_summary_bivar(), file, row.names = TRUE)
     }
   )
 })
