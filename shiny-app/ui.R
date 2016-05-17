@@ -42,6 +42,12 @@ shinyUI(fluidPage(
     sidebarPanel(
       h4("Please select variable(s) of interest!"),
 
+      conditionalPanel(condition = "input.tabs != 4",
+        selectInput("country", "Country",
+          choices = countries_in_data
+        )
+      ),
+
       conditionalPanel(condition = "input.tabs == 1",
         selectInput("variable_veto", "Variable",
           choices = list("Veto Point President" = "vto_prs",
@@ -95,11 +101,6 @@ shinyUI(fluidPage(
       conditionalPanel(condition = "input.tabs == 4",
         selectInput("variable_map", "Variable",
           choices = list("Average Cabinet Lower House Seat Share" = "Average Cabinet Lower House Seat Share")
-        )
-      ),
-      conditionalPanel(condition = "input.tabs != 4",
-        selectInput("country", "Country",
-          choices = countries_in_data
         )
       ),
 
