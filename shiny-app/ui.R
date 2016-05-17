@@ -84,8 +84,8 @@ shinyUI(fluidPage(
         "year_range",
         label = h3("Year range"),
         min = 1940,
-        max = 2010,
-        value = c(1940, 2010),
+        max = 2016,
+        value = c(1940, 2016),
         sep = ""
       ) 
     ),
@@ -97,7 +97,7 @@ shinyUI(fluidPage(
           value = 1,
           tableOutput("information_veto"),
           h5(textOutput("polltitle_veto", inline=TRUE)),
-          plotlyOutput("lineplot_veto", height="600px"),
+          plotOutput("lineplot_veto", height="600px"),
           downloadButton('downloadPlot', 'Download graph'),
           tableOutput("summary_veto"),
           downloadButton('downloadTable', 'Download table')
@@ -105,14 +105,14 @@ shinyUI(fluidPage(
         tabPanel("Bivariate Association",
           value = 2,
           h5(textOutput("polltitle_bivar", inline=TRUE)),
-          plotlyOutput("plot_bivar", height="600px"),
+          plotOutput("plot_bivar", height="600px"),
           downloadButton('downloadPlot2', 'Download graph'),
           tableOutput("summary_bivariate"),
           downloadButton('downloadTable2', 'Download table')
         ),
         tabPanel("Barplot",
           value = 3,
-          plotlyOutput("plot_bar", height="600px")
+          plotOutput("plot_bar", height="600px")
         ),
         tabPanel("Map",
           value = 4,

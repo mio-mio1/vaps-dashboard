@@ -12,7 +12,8 @@ loadCache(load(file = "data/data_13april.Rdata"), key = list("", ""))
 
 shinyServer(function(input, output) {
 
-  output$lineplot_veto <- renderPlotly({
+  output$lineplot_veto <- renderPlot({
+    #pdf(NULL)
     get_plot_veto()
   })
 
@@ -24,11 +25,13 @@ shinyServer(function(input, output) {
     get_information_veto()
   }, include.rownames=FALSE)
 
-  output$plot_bivar <- renderPlotly({
+  output$plot_bivar <- renderPlot({
+    #pdf(NULL)
     get_plot_bivar()
   })
 
-  output$plot_bar <- renderPlotly({
+  output$plot_bar <- renderPlot({
+    #pdf(NULL)
     get_plot_bar()
   })
 
@@ -88,15 +91,15 @@ shinyServer(function(input, output) {
 
       # adjust level of factor dependent on missing values and input chosen
       if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 != "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"),"NA")
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1", "NA"))
         merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
       } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 != "vto_pts") {
         merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c("0","1"))
       } else if (any(is.na(merged_data[,input$var1]))==TRUE & input$var1 == "vto_pts") {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1]))),"NA"))
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(seq(0, max(as.numeric(as.character(na.omit(merged_data[,"vto_pts"]))))),"NA"))
         merged_data[,input$var1][is.na(merged_data[,input$var1])] <- "NA"
-      } else {
-        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(levels(droplevels(as.factor(merged_data[,input$var1])))))
+      } else if (any(is.na(merged_data[,input$var1]))==FALSE & input$var1 == "vto_pts") {
+        merged_data[,input$var1] <- factor(merged_data[,input$var1], levels=c(seq(0, max(as.numeric(as.character(na.omit(merged_data[,"vto_pts"])))))))
       }
 
       min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
@@ -121,54 +124,57 @@ shinyServer(function(input, output) {
       veto_plot <- veto_plot + theme_light() + xlab("Date") +
         ylab(names(choices[c(which(choices==input$var1)[1])]))
       if (input$var1 != "vto_pts") {
-        veto_plot <- veto_plot + scale_y_discrete(limits=c("0","1"), breaks= c("0","1"), drop=FALSE)
-        (veto_plot <- ggplotly(veto_plot))
+        veto_plot <- veto_plot + scale_y_discrete(drop=FALSE)
+        veto_plot
+        #(plotly_veto_plot <- ggplotly(veto_plot))
       } else {
-      #  veto_plot <- veto_plot + scale_y_discrete(
-        #  breaks= as.character(c(seq(0, max(as.numeric(as.character(merged_data[,"vto_pts"][merged_data[,"vto_pts"]!="NA"]))), 1))),
-      #    drop = TRUE)
-          #limits= as.character(c("0", max(as.numeric(as.character(merged_data[[input$var1]]))))), 
-        (veto_plot <- ggplotly(veto_plot))
+        veto_plot <- veto_plot + scale_y_discrete(drop=FALSE)
+        veto_plot
       }
     }
-   })
+  })
 
   get_summary_veto <- reactive({
-    if (input$var1 != "vto_pts") {
-      country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
-      merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
-  
-      merged_data[,input$var1] <- as.factor(merged_data[,input$var1])
-  
-      min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
-      max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
-  
-      merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
-      
-      choices <- list("Veto Point President" = "vto_prs",
-        "Veto Point Head of Government" = "vto_hog",
-        "Veto Point Lower House" = "vto_lh",
-        "Veto Point Upper House" = "vto_uh",
-        "judicial Veto Point" = "vto_jud",
-        "electoral Veto Point" = "vto_elct",
-        "territorial Veto Point" = "vto_terr",
-        "Sum of open Veto Points" = "vto_pts"
-      )
-  
-      merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
-  
-      if (length(merged_data[,1]) == 0) {
-        # do nothing
-      } else {
+    country <- country[c("ctr_id", "ctr_n", "ctr_ccode")]
+    merged_data <- merge(eval(parse(text=input$var1))[c("ctr_id", "sdate", input$var1)], country, by="ctr_id")
+
+    merged_data[,input$var1] <- as.factor(merged_data[,input$var1])
+    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+    merged_data <- merged_data[as.Date(merged_data$sdate) %in% c(max_date:min_date), ]
+    choices <- list("Veto Point President" = "vto_prs",
+      "Veto Point Head of Government" = "vto_hog",
+      "Veto Point Lower House" = "vto_lh",
+      "Veto Point Upper House" = "vto_uh",
+      "judicial Veto Point" = "vto_jud",
+      "electoral Veto Point" = "vto_elct",
+      "territorial Veto Point" = "vto_terr",
+      "Sum of open Veto Points" = "vto_pts"
+    )
+    merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
+
+    if (length(merged_data[,1]) == 0) {
+      # do nothing
+    } else {
+      if (input$var1 != "vto_pts") {
         table <- table(as.Date(merged_data$sdate),merged_data[,input$var1])
-  
+
         summary <- data.frame(table[,1])
         summary[1] <- ifelse(summary[1]==1, "Closed", "Open")
         names(summary)[1] <- "Open/Closed"
         summary
-      }
-    } else {
+      } else {
+        table <- table(as.Date(merged_data$sdate),merged_data[,"vto_pts"])
 
+        for (i in 1:length(colnames(table))) {
+          table[,i] <- ifelse(table[,i]==1, as.numeric(colnames(table)[i]), 0)
+        }
+
+        table <- as.data.frame.matrix(table)
+        table$'Sum Veto Points' <- rowSums(table)
+        table$'Sum Veto Points' <- as.factor(table$'Sum Veto Points')
+        table <- subset(table, select = c('Sum Veto Points'))
+      }
     }
   })
 
@@ -198,9 +204,11 @@ shinyServer(function(input, output) {
 
     if (input$linear_box) {
       veto_plot <- veto_plot + geom_smooth(method=lm)
-      (veto_plot <- ggplotly(veto_plot))
+      veto_plot
+      #(veto_plot <- ggplotly(veto_plot))
     } else {
-      (veto_plot <- ggplotly(veto_plot))
+      #(veto_plot <- ggplotly(veto_plot))
+      veto_plot
     }
   })
 
@@ -304,15 +312,15 @@ shinyServer(function(input, output) {
     }
   })
 
-  #output$downloadPlot <- downloadHandler(
-  #  filename = function () {
-  #    paste('plot', '.png', sep='')
-  #  },
-  #  content = function (file) {
-  #    plot <- get_plot_veto()
-  #    ggsave(file, plot, width=10, height=10)
-  #  }
-  #)
+  output$downloadPlot <- downloadHandler(
+    filename = function () {
+      paste('plot', '.png', sep='')
+    },
+    content = function (file) {
+      plot <- get_plot_veto()
+      ggsave(file, plot, width=10, height=10)
+    }
+  )
 
   output$downloadTable <- downloadHandler(
     filename = function () {
