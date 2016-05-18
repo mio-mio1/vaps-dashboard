@@ -21,11 +21,19 @@ h1 {
   margin: 0.67em 100px;
 }
 
+body {
+  background-image: url(../img/hukombi_bbw.jpg);
+  background-repeat: no-repeat;
+  background-position: 95% 25px;
+  position:relative;
+  background-size: 15%;
+}
+
 /* 
 set color of a tag in body, i.e., links to other tabs
 */
 body a {
-  color: white;
+  color: black;
 }
 
 
