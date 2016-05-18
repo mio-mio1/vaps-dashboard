@@ -55,26 +55,30 @@ shinyServer(function(input, output) {
       merged_data <- merge(veto_points, country, by="ctr_id")
       merged_data <- subset(merged_data,merged_data[,"ctr_ccode"]==input$country)
 
+      #use of names because id coding of institutions here inconsistent! (vto_inst_typ used instead of vto_id)
       choices <- list(
-        "1" = "vto_prs",
-        "2" = "vto_hog",
-        "3" = "vto_lh",
-        "4" = "vto_uh",
-        "5" = "vto_jud",
-        "6" = "vto_elct",
-        "7" = "vto_terr"
+        "vto_prs" = "head of state",
+        "vto_hog" = "head of government",
+        "vto_lh" = "lower house",
+        "vto_uh" = "upper house",
+        "vto_jud" = "judicial",
+        "vto_elct" = "electoral",
+        "vto_terr" = "territorial"
       )
 
-      names(choices) <- paste0(unique(merged_data[,"ctr_id"]),"00",names(choices))
       merged_data[,"vto_cmt"] <- gsub("^.$", "no comment", merged_data[,"vto_cmt"])
 
-      information_table <- data.frame()
-      information_table[1,1] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(4)]
-      information_table[1,2] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(5)]
-      information_table[1,3] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(8)]
-      information_table[1,4] <- merged_data[ which(merged_data$vto_id==names(which(choices==input$variable_veto))),c(9)]
-      colnames(information_table) <- c("Name", "English Name", "Veto Power", "Comment")
-      information_table
+      if (any( merged_data$vto_inst_typ==choices[which(names(choices)=="vto_prs")])) {
+        information_table <- data.frame()
+        information_table[1,1] <- merged_data[ which(merged_data$vto_inst_typ==choices[which(names(choices)==input$variable_veto)]),c(4)]
+        information_table[1,2] <- merged_data[ which(merged_data$vto_inst_typ==choices[which(names(choices)==input$variable_veto)]),c(5)]
+        information_table[1,3] <- merged_data[ which(merged_data$vto_inst_typ==choices[which(names(choices)==input$variable_veto)]),c(8)]
+        information_table[1,4] <- merged_data[ which(merged_data$vto_inst_typ==choices[which(names(choices)==input$variable_veto)]),c(9)]
+        colnames(information_table) <- c("Name", "English Name", "Veto Power", "Comment")
+        information_table
+      } else {
+        #do nothing
+      }
     }
   })
 
