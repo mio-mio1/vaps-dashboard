@@ -44,6 +44,9 @@ view_configurations <- c(view_configurations, query_views[grep("lhelc_lsq",query
 # add view 'pty_lh_sts_shr'
 view_configurations <- c(view_configurations, query_views[grep("pty_lh_sts_shr",query_views$viewname),])
 
+# add view 'pty_uh_sts_shr'
+view_configurations <- c(view_configurations, query_views[grep("pty_uh_sts_shr",query_views$viewname),])
+
 # read view_configurations
 # for sake of convenience, use only substring as name without 'view_configuration_' prefix
 for (i in 1:length(view_configurations)) {

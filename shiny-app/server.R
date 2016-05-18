@@ -6,8 +6,9 @@ library(leaflet)
 library(rgdal)
 library(jsonlite)
 library(plotly)
+library(plyr)
 
-loadCache(load(file = "data/data_13april.Rdata"), key = list("", ""))
+loadCache(load(file = "data/data_17may.Rdata"), key = list("", ""))
 
 
 shinyServer(function(input, output) {
@@ -16,18 +17,6 @@ shinyServer(function(input, output) {
     #pdf(NULL)
     get_plot_veto()
   })
-
-  output$summary_veto <- renderTable({
-    get_summary_veto()
-  })
-
-  output$summary_bivar <- renderTable({
-    get_summary_bivar()
-  })
-
-  output$information_veto <-  renderTable({
-    get_information_veto()
-  }, include.rownames=FALSE)
 
   output$plot_bivar <- renderPlot({
     #pdf(NULL)
@@ -43,6 +32,21 @@ shinyServer(function(input, output) {
     get_plot_map()
   })
 
+  output$summary_veto <- renderTable({
+    get_summary_veto()
+  })
+
+  output$summary_bivar <- renderTable({
+    get_summary_bivar()
+  })
+
+  output$summary_barplot <- renderTable({
+    get_summary_bar()
+  }, include.rownames=FALSE)
+
+  output$information_veto <-  renderTable({
+    get_information_veto()
+  }, include.rownames=FALSE)
 
   #reactives needed for first tab, veto point plots
   get_information_veto <- reactive({
@@ -295,28 +299,111 @@ shinyServer(function(input, output) {
   })
 
   get_plot_bar <- reactive ({
-    merged_data_bar <- merge(lower_house, view_pty_lh_sts_shr, by="lh_id")
-    merged_data_bar <- merge(merged_data_bar, country[c(1,2,3)], by="ctr_id")
-    merged_data_bar <- merge(merged_data_bar, party[,c(1,2)], by="pty_id")
+    if (input$variable_barplot=="pty_lhelc_sts_shr") {
+      merged_data_bar <- merge(lower_house, view_pty_lh_sts_shr, by="lh_id")
+      merged_data_bar <- merge(merged_data_bar, country[c(1,2,3)], by="ctr_id")
+      merged_data_bar <- merge(merged_data_bar, party[,c(1,2)], by="pty_id")
+      names(merged_data_bar)[names(merged_data_bar)=="lh_sdate"] <- "sdate"
+    } else if (input$variable_barplot=="pty_uh_sts_shr") {
+      merged_data_bar <- merge(upper_house, view_pty_uh_sts_shr, by="uh_id")
+      merged_data_bar <- merge(merged_data_bar, country[c(1,2,3)], by="ctr_id")
+      merged_data_bar <- merge(merged_data_bar, party[,c(1,2)], by="pty_id")
+      names(merged_data_bar)[names(merged_data_bar)=="uh_sdate"] <- "sdate"
+    }
 
-    choices = list("Lower house seat share" = "vto_elct")
+    choices <- list("Lower house seat share" = "pty_lhelc_sts_shr",
+      "Upper house seat share" = "pty_uh_sts_shr")
 
-    merged_data_bar <- subset(na.omit(subset(merged_data_bar,merged_data_bar[,"ctr_ccode"]==input$country & merged_data_bar$pty_abr!= "Z")))
-    
+    merged_data_bar <- subset(merged_data_bar,merged_data_bar[,"ctr_ccode"]==input$country)
+
     min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
     max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
-    
-    merged_data_bar <- merged_data_bar[as.Date(merged_data_bar$sdate) %in% c(max_date:min_date), ]
-    
-    merged_data_bar$pty_lhelc_sts_shr <- as.numeric(as.character(merged_data_bar$pty_lhelc_sts_shr))
 
-    merged_data_bar <- merged_data_bar[order(merged_data_bar$ctr_id, merged_data_bar$pty_abr),]
+    merged_data_bar$sdate <- as.Date(merged_data_bar$sdate)
+    merged_data_bar <- merged_data_bar[merged_data_bar$sdate %in% c(max_date:min_date), ]
 
-    bar_plot <- ggplot(merged_data_bar, aes(x=as.Date(lh_sdate), y=pty_lhelc_sts_shr, fill=pty_abr))
+    merged_data_bar[,input$variable_barplot] <- as.numeric(as.character(merged_data_bar[,input$variable_barplot]))
+
+    threshold <- ifelse(input$threshold_barplot==1, 0.025, 
+      ifelse(input$threshold_barplot==2, 0.05, 0.10))
+    merged_data_bar[,"pty_abr"] <- ifelse(merged_data_bar[,input$variable_barplot] < threshold, "other", merged_data_bar[,"pty_abr"])
+
+    merged_data_bar <- merged_data_bar[order(merged_data_bar$ctr_id, merged_data_bar$sdate, merged_data_bar$pty_abr),]
+
+    split_data <- split(merged_data_bar,merged_data_bar$sdate)
+
+    for (i in 1:length(split_data)){
+      split_data[[i]][,input$variable_barplot] <- ifelse(split_data[[i]][,input$variable_barplot] <= threshold, round(sum(split_data[[i]][,input$variable_barplot][which(split_data[[i]][,input$variable_barplot] <= threshold)])*100,2),
+      paste0(round(split_data[[i]][,input$variable_barplot]*100,2)))
+    }
+
+    for (i in 1:length(split_data)){
+      non_other <- which(split_data[[i]]$pty_abr!="other")
+      other_first <- which(split_data[[i]]$pty_abr=="other")[1]
+      split_data[[i]] <- split_data[[i]][c(non_other,other_first),]
+    }
+
+    merged_data_bar <- rbind.fill(split_data)
+    merged_data_bar[,input$variable_barplot] <- as.numeric(merged_data_bar[,input$variable_barplot])
+
+    bar_plot <- ggplot(merged_data_bar, aes_string(x="sdate", y=input$variable_barplot, fill="pty_abr", label = input$variable_barplot))
     bar_plot <- bar_plot + geom_bar(stat = "identity", position = "stack") + scale_fill_brewer(palette=1, na.value="black")
-    bar_plot <- bar_plot + theme_light() + xlab("Date") + ylab("Seat share by party") + guides(fill = guide_legend(reverse = TRUE, title="Party"))
-    (bar_plot <- ggplotly(bar_plot))
+    bar_plot <- bar_plot + theme_light() + xlab("Date") + ylab(names(choices[c(which(choices==input$variable_barplot)[1])])) +
+      guides(fill = guide_legend(reverse = TRUE, title="Party"))
+    
+    if (input$label_barplot==TRUE & input$flip_barplot==FALSE) {
+      bar_plot <- bar_plot + geom_text(aes(label = paste0(round(merged_data_bar[,input$variable_barplot],0), "%")),
+        position = "stack", vjust=1, size=5)
+    }
+
+    if (input$label_barplot==TRUE & input$flip_barplot==TRUE) {
+      bar_plot <- bar_plot + geom_text(aes(label = paste0(round(merged_data_bar[,input$variable_barplot],0), "%")),
+        position = "stack", hjust=1, size=5) + coord_flip()
+    }
+
+    if (input$label_barplot==FALSE & input$flip_barplot==TRUE) {
+      bar_plot <- bar_plot + coord_flip()
+    }
+
+    bar_plot
   })
+
+  get_summary_bar <- reactive ({
+    if (input$variable_barplot=="pty_lhelc_sts_shr") {
+      merged_data_bar <- merge(lower_house, view_pty_lh_sts_shr, by="lh_id")
+      merged_data_bar <- merge(merged_data_bar, country[c(1,2,3)], by="ctr_id")
+      merged_data_bar <- merge(merged_data_bar, party[,c(1,2)], by="pty_id")
+      names(merged_data_bar)[names(merged_data_bar)=="lh_sdate"] <- "sdate"
+    } else if (input$variable_barplot=="pty_uh_sts_shr") {
+      merged_data_bar <- merge(upper_house, view_pty_uh_sts_shr, by="uh_id")
+      merged_data_bar <- merge(merged_data_bar, country[c(1,2,3)], by="ctr_id")
+      merged_data_bar <- merge(merged_data_bar, party[,c(1,2)], by="pty_id")
+      names(merged_data_bar)[names(merged_data_bar)=="uh_sdate"] <- "sdate"
+    }
+
+    choices <- list("Lower house seat share" = "pty_lhelc_sts_shr",
+      "Upper house seat share" = "pty_uh_sts_shr")
+
+    merged_data_bar <- subset(merged_data_bar,merged_data_bar[,"ctr_ccode"]==input$country)
+
+    min_date <- as.Date(as.character(input$year_range[1]),format="%Y")
+    max_date <- as.Date(as.character(input$year_range[2]),format="%Y")
+
+    merged_data_bar$sdate <- as.Date(merged_data_bar$sdate)
+    merged_data_bar <- merged_data_bar[merged_data_bar$sdate %in% c(max_date:min_date), ]
+
+    merged_data_bar[,input$variable_barplot] <- as.numeric(as.character(merged_data_bar[,input$variable_barplot]))
+
+    sum_table <- merged_data_bar[c("sdate", "pty_abr", input$variable_barplot)]
+    sum_table[,input$variable_barplot] <- round(sum_table[,input$variable_barplot]*100,2)
+    sum_table <- sum_table[order(sum_table$sdate, sum_table$pty_abr),]
+    colnames(sum_table) <- c("Date", "Party abbreviation", names(choices[c(which(choices==input$variable_barplot)[1])]))
+
+    #due to xtable bug in R, date has to be transformed to character string
+    sum_table$Date <- as.character(sum_table$Date)
+    sum_table
+  })
+
 
   get_plot_map <- reactive ({
     geojson <- readLines("data/countriesOld.geojson", warn = FALSE) %>%
@@ -431,4 +518,24 @@ shinyServer(function(input, output) {
       write.table(get_summary_bivar(), file, row.names = TRUE)
     }
   )
+
+    output$downloadBarPlot <- downloadHandler(
+    filename = function () {
+      paste('plot', '.png', sep='')
+    },
+    content = function (file) {
+      plot <- get_plot_bar()
+      ggsave(file, plot, width=10, height=10)
+    }
+  )
+
+  output$downloadBarTable <- downloadHandler(
+    filename = function () {
+      paste('table', '.csv', sep='')
+    },
+    content = function (file) {
+      write.table(get_summary_bar(), file, row.names = TRUE)
+    }
+  )
+
 })
