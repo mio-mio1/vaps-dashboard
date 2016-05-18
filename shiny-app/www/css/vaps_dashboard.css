@@ -27,12 +27,23 @@ body {
   background-position: 95% 25px;
   position:relative;
   background-size: 15%;
+  padding-right: 15px;
+  padding-top: 15px;
 }
 
 /* 
 set color of a tag in body, i.e., links to other tabs
 */
 body a {
+  color: white;
+}
+
+footer a {
+  position: relative;
+  bottom: -150px;
+  left: 2%;
+  padding-left: 15px;
+  padding-bottom: 15px;
   color: black;
 }
 
@@ -41,14 +52,14 @@ body a {
 when hovering over tabs in body
 */
 body a:hover {
-    color: #036;
+  color: #036;
 }
 
 /* 
 when clicking on tab
 */
 body a:focus {
-    color: #036;
+  color: #036;
 }
 
 /* 
