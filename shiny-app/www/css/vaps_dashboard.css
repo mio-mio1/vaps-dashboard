@@ -21,6 +21,16 @@ h1 {
   margin: 0.67em 100px;
 }
 
+body {
+  background-image: url(../img/hukombi_bbw.jpg);
+  background-repeat: no-repeat;
+  background-position: 95% 25px;
+  position:relative;
+  background-size: 15%;
+  padding-right: 15px;
+  padding-top: 15px;
+}
+
 /* 
 set color of a tag in body, i.e., links to other tabs
 */
@@ -28,19 +38,28 @@ body a {
   color: white;
 }
 
+footer a {
+  position: relative;
+  bottom: -150px;
+  left: 2%;
+  padding-left: 15px;
+  padding-bottom: 15px;
+  color: black;
+}
+
 
 /* 
 when hovering over tabs in body
 */
 body a:hover {
-    color: black;
+  color: #036;
 }
 
 /* 
 when clicking on tab
 */
 body a:focus {
-    color: black;
+  color: #036;
 }
 
 /* 
@@ -61,26 +80,28 @@ sidebar tab
 box inside sidebar tab
 */
 .well {
-  background-color: white;
-  border: 1px solid black;
+  background-color: #CC9;
+  border: 1px solid #CC9;
   box-shadow: none;
+  color: #036 !important;
+  font-family: Verdana,Helvetica,Arial,sans-serif
 }
 
 /* 
 nav tab
 */
 .nav-tabs {
-  border-bottom: 1px solid black;
-  border-top: 1px solid black;
+  border-bottom: 1px solid #036;
+  border-top: 1px solid #036;
 }
 
 /* 
 active nav tab
 */
 .nav-tabs > li.active > a {
-  border: 1px solid black;
-  background-color: #036;
-  color: #FFF;
+  border: 1px solid #036;
+  background-color: #FFF;
+  color: #036;
 }
 
 .nav-tabs {
@@ -89,11 +110,15 @@ active nav tab
 }
 
 /* 
-set inactive variable text in dropdown to gray
+set inactive variable text in dropdown to blue
 */
 .selectize-dropdown {
   font-family: sans-serif;
-  color: gray;
+  color: #036 !important;
+}
+
+.selectize-input {
+  color: #036 !important;
 }
 
 /* 
@@ -101,17 +126,17 @@ year slider in sidebar elements
 */
 
 .irs-from, .irs-to, .irs-bar, .irs-slider {
-  background: gray;
+  background: #036 !important;
 }
 
 .irs-bar, .irs-slider {
-  border-top: gray;
-  border-bottom: gray;
+  border-top: #036 !important;
+  border-bottom: #036 !important;
 }
 
 /* 
 text in data table
 */
 body table.data {
-  color: gray;
+  color: black;
 }

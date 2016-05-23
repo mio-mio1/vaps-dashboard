@@ -42,8 +42,14 @@ shinyUI(fluidPage(
     sidebarPanel(
       h4("Please select variable(s) of interest!"),
 
+      conditionalPanel(condition = "input.tabs != 4",
+        selectInput("country", h5("Country"),
+          choices = countries_in_data
+        )
+      ),
+
       conditionalPanel(condition = "input.tabs == 1",
-        selectInput("var1", "Variable",
+        selectInput("variable_veto", h5("Variable"),
           choices = list("Veto Point President" = "vto_prs",
             "Veto Point Head of Government" = "vto_hog",
             "Veto Point Lower House" = "vto_lh",
@@ -56,38 +62,66 @@ shinyUI(fluidPage(
         )
       ),
       conditionalPanel(condition = "input.tabs == 2",
-        selectInput("var1", "Variable x-axis",
-          choices = list("Cabinet seat share" = "cab_shr")
+        selectInput("variable_bivar1", h5("Variable x-axis"),
+          choices = list("LH Disproportionality" = "lhelc_lsq",
+            "effective number of parties" = "lh_enpp",
+            "cabinet seat share" = "cab_lh_sts_shr",
+            "seat A volatitlity" = "lhelc_vola_sts",
+            "seat B volatitlity" ="lhelc_volb_sts",
+            "vote A volatitlity" = "lhelc_vola_vts",
+            "vote B volatitlity" = "lhelc_volb_vts"
+          ),
+          selected = "lhelc_lsq"
         ),
-        selectInput("var2", "Variable y-axis",
-          choices = list("Least squares index" = "lsq")
+        selectInput("variable_bivar2", h5("Variable y-axis"),
+          choices = list("LH Disproportionality" = "lhelc_lsq",
+            "effective number of parties" = "lh_enpp",
+            "cabinet seat share" = "cab_lh_sts_shr",
+            "seat A volatitlity" = "lhelc_vola_sts",
+            "seat B volatitlity" ="lhelc_volb_sts",
+            "vote A volatitlity" = "lhelc_vola_vts",
+            "vote B volatitlity" = "lhelc_volb_vts"
+          ),
+          selected = "lh_enpp"
         ),
-        checkboxInput("linear_box", "Add linear prediction", value= FALSE)
+        radioButtons("axis_scale", label = h5("Range axes"), 
+          choices = list("Adjusted" = 2, "Original" = 1),
+          selected = 2
+        ),
+        radioButtons("prediction_box", label = h5("Add prediction"), 
+          choices = list("None" = 0, "Linear" = 1, "Local" = 2),
+          selected = 0
+        )
       ),
       conditionalPanel(condition = "input.tabs == 3",
-        selectInput("var1", "Variable",
-          choices = list("Seat share in Lower House" = "germany")
+        selectInput("variable_barplot", h5("Variable"),
+          choices = list("Lower house seat share" = "pty_lhelc_sts_shr",
+            "Upper house seat share" = "pty_uh_sts_shr"
+          )
+        ),
+        checkboxInput("label_barplot", "Add percentage labels"),
+        checkboxInput("flip_barplot", "Flip graph"),
+        radioButtons("threshold_barplot", label = h5("Threshold graph inclusion"), 
+          choices = list("2.5%" = 1, "5%" = 2, "10%" = 3),
+          selected = 2
         )
       ),
       conditionalPanel(condition = "input.tabs == 4",
-        selectInput("var_map", "Variable",
+        selectInput("variable_map", h5("Variable"),
           choices = list("Average Cabinet Lower House Seat Share" = "Average Cabinet Lower House Seat Share")
         )
       ),
-      conditionalPanel(condition = "input.tabs != 4",
-        selectInput("country", "Country",
-          choices = countries_in_data
+
+      conditionalPanel(condition = "input.tabs < 4",
+        sliderInput(
+          "year_range",
+          label = h5("Year range"),
+          min = 1940,
+          max = 2016,
+          value = c(1940, 2016),
+          sep = ""
         )
-      ),
-      
-      sliderInput(
-        "year_range",
-        label = h3("Year range"),
-        min = 1940,
-        max = 2010,
-        value = c(1940, 2010),
-        sep = ""
-      ) 
+      )
     ),
 
     mainPanel(
@@ -97,22 +131,25 @@ shinyUI(fluidPage(
           value = 1,
           tableOutput("information_veto"),
           h5(textOutput("polltitle_veto", inline=TRUE)),
-          plotlyOutput("lineplot_veto", height="600px"),
-          downloadButton('downloadPlot', 'Download graph'),
+          plotOutput("lineplot_veto", height="600px"),
+          downloadButton('downloadVetoPlot', 'Download graph'),
           tableOutput("summary_veto"),
-          downloadButton('downloadTable', 'Download table')
+          downloadButton('downloadVetoTable', 'Download table')
         ),
         tabPanel("Bivariate Association",
           value = 2,
           h5(textOutput("polltitle_bivar", inline=TRUE)),
-          plotlyOutput("plot_bivar", height="600px"),
-          downloadButton('downloadPlot2', 'Download graph'),
-          tableOutput("summary_bivariate"),
-          downloadButton('downloadTable2', 'Download table')
+          plotOutput("plot_bivar", height="600px"),
+          downloadButton('downloadBivariatePlot', 'Download graph'),
+          tableOutput("summary_bivar"),
+          downloadButton('downloadBivariateTable', 'Download table')
         ),
         tabPanel("Barplot",
           value = 3,
-          plotlyOutput("plot_bar", height="600px")
+          plotOutput("plot_bar", height="600px"),
+          downloadButton('downloadBarPlot', 'Download graph'),
+          tableOutput("summary_barplot"),
+          downloadButton('downloadBarTable', 'Download table')
         ),
         tabPanel("Map",
           value = 4,
